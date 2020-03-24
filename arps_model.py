@@ -10,14 +10,14 @@ def debit_empiric_hyperbolic(unknown_values, time):
 
 
 def error_hyperbolic(unknown_values, time, debit):
-    """ MSE error for regression. """
+    """ Error for hyperbolic approximation. """
     error_vector = debit - debit_empiric_hyperbolic(unknown_values, time)
 
     return np.dot(error_vector, error_vector)
 
 
 def r2_hyperbolic(unknown_values, time, debit):
-    """ R2 criteria """
+    """ R2 criteria. """
     return 1. - \
         np.sum(((debit -
                  debit_empiric_hyperbolic(unknown_values, time)) ** 2)) / \

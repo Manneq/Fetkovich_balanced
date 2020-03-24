@@ -47,14 +47,14 @@ def debit_dimensionless_fall(time, parameters):
 
 def debit_dimensionless_fall_bindings(unknown_values, time, pressure,
                                       parameters):
-    """ qDd matching"""
+    """ qDd matching. """
     return debit_dimensionless(unknown_values, time, pressure, parameters) * \
         (np.log(unknown_values[2] / (parameters[0] *
                                      np.exp(-unknown_values[0]))) - 1. / 2.)
 
 
 def error(unknown_values, time, pressure, parameters):
-    """ Error function """
+    """ Error function. """
     error_vector = time_dimensionless_fall_bindings(unknown_values, time,
                                                     parameters) - \
         time_dimensionless_fall(time, parameters) + \
