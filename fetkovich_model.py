@@ -68,10 +68,11 @@ def error(unknown_values, time, pressure, parameters):
 def fetkovich_model(initial_values, time, pressure, parameters):
     bounds = np.array([(-4, 4), (1, 1000), (1, 5000)])
 
-    results = scipy.optimize.minimize(error, initial_values,
-                                      args=(time, pressure, parameters),
-                                      method='L-BFGS-B',
-                                      bounds=bounds,
-                                      options={'maxiter': 100000})
+    results = \
+        scipy.optimize.minimize(error, initial_values,
+                                args=(time, pressure, parameters),
+                                method='L-BFGS-B',
+                                bounds=bounds,
+                                options={'maxiter': 100000})
 
     return results
