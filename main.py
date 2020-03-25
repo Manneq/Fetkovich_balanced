@@ -24,16 +24,16 @@ def main():
                                      parameters[2] * parameters[0] ** 2)) -
           3.228 + 0.868 * skin))
 
-    debit = debit[1:]
-    pressure = pressure[1:]
-    time = time[1:]
+    debit = debit[2::3]
+    pressure = pressure[2::3]
+    time = time[2::3]
 
     arps_results = arps_model.arps_model(time, debit)
+    print(arps_results)
 
     parameters = np.append(parameters, arps_results)
 
-    results = fetkovich_model.fetkovich_model(initial_values, time, pressure,
-                                              parameters)
+    results = fetkovich_model.fetkovich_model(initial_values, time, parameters)
     print(results)
 
     results = results.x
