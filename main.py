@@ -51,6 +51,10 @@ def main():
     plt.show()
     plt.close()
 
+    plt.plot(time, np.abs(debit - debit_res))
+    plt.show()
+    plt.close()
+
     return
 
 

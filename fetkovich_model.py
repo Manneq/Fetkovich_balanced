@@ -64,13 +64,14 @@ def error(unknown_values, time, parameters):
 
 
 def fetkovich_model(initial_values, time, parameters):
-    bounds = np.array([(-4, 4), (1, 1000), (1, 5000)])
+    bounds = np.array([(-4, 4), (1, 100), (1, 5000)])
 
     results = \
-        scipy.optimize.minimize(error, initial_values,
-                                args=(time, parameters),
-                                method='L-BFGS-B',
-                                bounds=bounds,
-                                options={'maxiter': 100000})
+        scipy.optimize.basinhopping(lambda unknown_variables:
+                                    error(unknown_variables, time, parameters),
+                                    initial_values, niter=100,
+                                    minimizer_kwargs={'method': 'L-BFGS-B',
+                                                      'bounds': bounds})
+    print(results)
 
     return results
