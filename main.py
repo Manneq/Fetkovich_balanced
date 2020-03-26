@@ -12,7 +12,6 @@ def main():
 
     data_management.data_output(results)
 
-
     return
 
 

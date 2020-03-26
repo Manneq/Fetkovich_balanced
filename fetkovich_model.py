@@ -111,7 +111,6 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
     best_results_x, best_results_fun = None, 100000
 
     for i in range(11):
-        print(i)
         results = \
             scipy.optimize.differential_evolution(mae_error, bounds,
                                                   args=(time, debit,
