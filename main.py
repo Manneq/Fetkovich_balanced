@@ -10,7 +10,6 @@ def main():
                                               cumulative_production,
                                               parameters)
 
-
     data_management.data_output(results)
 
     return
