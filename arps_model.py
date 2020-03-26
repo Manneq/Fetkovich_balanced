@@ -1,46 +1,40 @@
 import numpy as np
 import scipy.optimize
-import scipy.stats
+import matplotlib.pyplot as plt
 
 
-def debit_empiric_hyperbolic(unknown_values, time):
-    """ Hyperbolic q(t). """
-    return unknown_values[0] * (1. - unknown_values[1] * unknown_values[2] *
-                                time) ** (-1. / unknown_values[1])
+def debit_empiric(unknown_values, time):
+    """ q(t) """
+    if unknown_values[1] == 0:
+        return unknown_values[0] * np.exp(-unknown_values[2] * time)
+
+    return unknown_values[0] / \
+        np.sign(1. + unknown_values[1] * unknown_values[2] * time) * \
+        np.abs(1. + unknown_values[1] * unknown_values[2] * time) ** \
+        (1. / unknown_values[1])
 
 
-def error_hyperbolic(unknown_values, time, debit):
-    """ Error for hyperbolic approximation. """
-    error_vector = debit - debit_empiric_hyperbolic(unknown_values, time)
-
-    return np.dot(error_vector, error_vector)
-
-
-def r2_hyperbolic(unknown_values, time, debit):
-    """ R2 criteria. """
-    return 1. - \
-        np.sum(((debit -
-                 debit_empiric_hyperbolic(unknown_values, time)) ** 2)) / \
-        np.sum(((debit_empiric_hyperbolic(unknown_values, time) -
-                 np.mean(debit)) ** 2))
+def mae_error(unknown_values, time, debit):
+    """ MAE error. """
+    return np.sum(np.abs(debit - debit_empiric(unknown_values, time))) / \
+        time.shape[0]
 
 
 def arps_model(time, debit):
-    initial_values = np.array([debit.max(), 1., -0.5])
-    bounds = np.array([(0., debit.max() * 5.), (1e-4, 10.), (-1., 1.)])
+    bounds = ((1, np.max(debit)), (0, 1), (-1, 1))
 
-    hyperbolic_results = scipy.optimize.minimize(error_hyperbolic,
-                                                 initial_values,
-                                                 args=(time, debit),
-                                                 method='TNC',
-                                                 bounds=bounds,
-                                                 options={'maxiter': 100000})
+    results = scipy.optimize.differential_evolution(mae_error, bounds,
+                                                    args=(time, debit),
+                                                    updating='deferred',
+                                                    workers=-1)
 
-    exponential_results = scipy.stats.linregress(time, np.log(debit))
+    print(results)
 
-    if r2_hyperbolic(hyperbolic_results.x, time, debit) > \
-            exponential_results[2] * exponential_results[2]:
-        return hyperbolic_results.x
-    else:
-        return np.array([np.exp(exponential_results[1]), 0,
-                         exponential_results[0]])
+    plt.plot(time, debit)
+    plt.plot(time, debit_empiric(results.x, time))
+    plt.title("Arps model")
+    plt.show()
+    plt.close()
+
+    return results.x
+
