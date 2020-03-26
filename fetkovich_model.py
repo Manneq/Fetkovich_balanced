@@ -35,7 +35,7 @@ def cumulative_production_empiric(unknown_values, time, decline_type):
 
 def time_dimensionless(unknown_values, time, parameters):
     """ tD """
-    return 0.00634 * unknown_values[1] * time / \
+    return 634 / 100000 * unknown_values[1] * time / \
         (parameters[4] * parameters[3] * parameters[2] * parameters[0])
 
 
@@ -55,7 +55,7 @@ def time_dimensionless_fall_bindings(unknown_values, time, parameters):
 
 def debit_dimensionless(unknown_values, time, parameters, decline_type):
     """ qD """
-    return 141.2 * debit_empiric(unknown_values, time, decline_type) * \
+    return 1412 / 10 * debit_empiric(unknown_values, time, decline_type) * \
         parameters[3] * parameters[1] / (unknown_values[1] *
                                          parameters[5] * (parameters[7] -
                                                           parameters[6]))
@@ -113,7 +113,6 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
     best_results_x, best_results_fun = None, 100000
 
     while decline_type < 10:
-        print(decline_type / 10)
         results = \
             scipy.optimize.differential_evolution(mae_error, bounds,
                                                   args=(time, debit,
