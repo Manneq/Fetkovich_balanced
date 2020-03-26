@@ -90,16 +90,14 @@ def mae_error(unknown_values, time, debit, cumulative_production,
                                         decline_type))) / time.shape[0]
 
     mae_error_debit = np.sum(np.abs(
-        debit - debit_empiric(unknown_values, time, decline_type))
-                             [debit.shape[0] * 2 // 3:]) / \
-        (debit.shape[0] * 2 // 3)
+        debit - debit_empiric(unknown_values, time, decline_type))) / \
+        debit.shape[0]
 
     mae_error_cumulative_production = \
         np.sum(np.abs(cumulative_production -
                       cumulative_production_empiric(unknown_values,
-                                                    time, decline_type))
-               [cumulative_production.shape[0] * 2 // 3:]) / \
-        (cumulative_production.shape[0] * 2 // 3)
+                                                    time, decline_type))) / \
+        cumulative_production.shape[0]
 
     return mae_error_time_matching + mae_error_debit_matching + \
         mae_error_debit + mae_error_cumulative_production
@@ -107,12 +105,13 @@ def mae_error(unknown_values, time, debit, cumulative_production,
 
 def fetkovich_model(time, debit, cumulative_production, parameters):
     bounds = np.array([(-10, 10), (0.00001, 150), (1, 2000),
-                       (1, np.max(debit)), (-1, 1)])
+                       (1, np.max(debit)), (1e-6, 1e-2)])
 
-    decline_type = 1
+    decline_type = 0
     best_results_x, best_results_fun = None, 100000
 
-    while decline_type < 10:
+    for i in range(11):
+        print(i)
         results = \
             scipy.optimize.differential_evolution(mae_error, bounds,
                                                   args=(time, debit,
@@ -126,7 +125,5 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
         if results.fun < best_results_fun:
             best_results_fun = results.fun
             best_results_x = results.x
-
-        decline_type += 1
 
     return best_results_x
