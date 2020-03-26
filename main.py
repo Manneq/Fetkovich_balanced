@@ -3,9 +3,13 @@ import fetkovich_model
 
 
 def main():
-    time, debit, parameters = data_management.data_preprocessing()
+    time, debit, cumulative_production, parameters = \
+        data_management.data_preprocessing()
 
-    results = fetkovich_model.fetkovich_model(time, debit, parameters)
+    results = fetkovich_model.fetkovich_model(time, debit,
+                                              cumulative_production,
+                                              parameters)
+
 
     data_management.data_output(results)
 

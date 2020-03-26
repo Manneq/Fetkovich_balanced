@@ -13,6 +13,26 @@ def debit_empiric(unknown_values, time, decline_type):
         (1. / decline_type)
 
 
+def cumulative_production_empiric(unknown_values, time, decline_type):
+    """ Q(t) """
+    if decline_type == 0:
+        return (unknown_values[3] - debit_empiric(unknown_values,
+                                                  time, decline_type)) / \
+               unknown_values[4]
+
+    if decline_type == 1:
+        return unknown_values[3] * np.log(
+            unknown_values[3] / debit_empiric(unknown_values, time,
+                                              decline_type)) / \
+            unknown_values[4]
+
+    return unknown_values[3] ** decline_type * \
+        (unknown_values[3] ** (1 - decline_type) -
+         np.sign(debit_empiric(unknown_values, time, decline_type)) *
+         np.abs(debit_empiric(unknown_values, time, decline_type)) **
+         (1 - decline_type)) / (unknown_values[4] * (1 - decline_type))
+
+
 def time_dimensionless(unknown_values, time, parameters):
     """ tD """
     return 0.00634 * unknown_values[1] * time / \
@@ -55,7 +75,8 @@ def debit_dimensionless_fall_bindings(unknown_values, time, parameters,
                                      np.exp(-unknown_values[0]))) - 1. / 2.)
 
 
-def mae_error(unknown_values, time, debit, parameters, decline_type):
+def mae_error(unknown_values, time, debit, cumulative_production,
+              parameters, decline_type):
     """ MAE error. """
     mae_error_time_matching = np.sum(
         np.abs(time_dimensionless_fall_bindings(unknown_values,
@@ -69,32 +90,44 @@ def mae_error(unknown_values, time, debit, parameters, decline_type):
                                         decline_type))) / time.shape[0]
 
     mae_error_debit = np.sum(np.abs(
-        debit - debit_empiric(unknown_values, time, decline_type))) / \
-        debit.shape[0]
+        debit - debit_empiric(unknown_values, time, decline_type))
+                             [debit.shape[0] * 2 // 3:]) / \
+        (debit.shape[0] * 2 // 3)
 
-    return mae_error_time_matching + mae_error_debit_matching + mae_error_debit
+    mae_error_cumulative_production = \
+        np.sum(np.abs(cumulative_production -
+                      cumulative_production_empiric(unknown_values,
+                                                    time, decline_type))
+               [cumulative_production.shape[0] * 2 // 3:]) / \
+        (cumulative_production.shape[0] * 2 // 3)
+
+    return mae_error_time_matching + mae_error_debit_matching + \
+        mae_error_debit + mae_error_cumulative_production
 
 
-def fetkovich_model(time, debit, parameters):
+def fetkovich_model(time, debit, cumulative_production, parameters):
     bounds = np.array([(-10, 10), (0.00001, 150), (1, 2000),
                        (1, np.max(debit)), (-1, 1)])
 
-    decline_type = 0.1
+    decline_type = 1
     best_results_x, best_results_fun = None, 100000
 
-    while decline_type <= 1.:
-        results = scipy.optimize.differential_evolution(mae_error, bounds,
-                                                        args=(time, debit,
-                                                              parameters,
-                                                              decline_type),
-                                                        updating='deferred',
-                                                        maxiter=1000000,
-                                                        workers=-1)
+    while decline_type < 10:
+        print(decline_type / 10)
+        results = \
+            scipy.optimize.differential_evolution(mae_error, bounds,
+                                                  args=(time, debit,
+                                                        cumulative_production,
+                                                        parameters,
+                                                        decline_type / 10),
+                                                  updating='deferred',
+                                                  maxiter=1000000,
+                                                  workers=-1)
 
         if results.fun < best_results_fun:
             best_results_fun = results.fun
             best_results_x = results.x
 
-        decline_type += 0.1
+        decline_type += 1
 
     return best_results_x

@@ -26,22 +26,29 @@ def data_preprocessing():
 
     time = np.array(data.loc[1:, 'Elapsed time'].values).astype(int)
     debit = np.array(data.loc[1:, 'qo'].values)
+    cumulative_production = np.array(data.loc[1:, 'Qo'].values)
 
     for i in range(debit.shape[0]):
         debit[i] = debit[i].replace(",", ".")
+        cumulative_production[i] = cumulative_production[i].replace(",", ".")
 
     debit = debit.astype(float)
+    cumulative_production = cumulative_production.astype(float)
 
     time = time[time.shape[0] // 5:]
     debit = debit[debit.shape[0] // 5:]
+    cumulative_production = \
+        cumulative_production[cumulative_production.shape[0] // 5:]
 
-    return time, debit, parameters
+    return time, debit, cumulative_production, parameters
 
 
 def data_output(results):
     data = pd.DataFrame([results], columns=['Skin', 'Porosity',
-                                          'Collector radius', 'Initial debit',
-                                          'Fall rate'])
+                                            'Collector radius',
+                                            'Initial debit',
+                                            'Fall rate'])
+    data = data.set_index('Skin')
 
     data.to_csv(path_or_buf="data/output/results.csv", sep=";")
 
