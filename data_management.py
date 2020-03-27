@@ -35,10 +35,12 @@ def data_preprocessing():
     debit = debit.astype(float)
     cumulative_production = cumulative_production.astype(float)
 
-    time = time / 24
-    debit = debit
+    """
+    time = time[cumulative_production.shape[0] // 5:]
+    debit = debit[cumulative_production.shape[0] // 5:]
     cumulative_production = \
-        cumulative_production
+        cumulative_production[cumulative_production.shape[0] // 5:]
+        """
 
     return time, debit, cumulative_production, parameters
 

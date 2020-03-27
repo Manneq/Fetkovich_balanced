@@ -3,6 +3,11 @@ import scipy.optimize
 import platypus
 
 
+def effective_well_radius(unknown_values, parameters):
+    """ rwa """
+    return parameters[0] * np.exp(-unknown_values[0])
+
+
 def debit_empiric(unknown_values, time, decline_type):
     """ q(t) """
     if decline_type == 0:
@@ -48,10 +53,11 @@ def time_dimensionless_fall(unknown_values, time):
 def time_dimensionless_fall_bindings(unknown_values, time, parameters):
     """ tDd matching """
     return 4. * time_dimensionless(unknown_values, time, parameters) / \
-        (((unknown_values[2] / parameters[0] *
-           np.exp(-unknown_values[0])) ** 2 - 1.) *
+        (((unknown_values[2] / effective_well_radius(unknown_values,
+                                                     parameters)) ** 2 - 1.) *
          (2. * np.log(unknown_values[2] /
-                      (parameters[0] * np.exp(-unknown_values[0]))) - 1.))
+                      (effective_well_radius(unknown_values, parameters))) -
+          1.))
 
 
 def debit_dimensionless(unknown_values, time, parameters, decline_type):
@@ -64,7 +70,8 @@ def debit_dimensionless(unknown_values, time, parameters, decline_type):
 
 def debit_dimensionless_fall(unknown_values, time, decline_type):
     """ qDd """
-    return debit_empiric(unknown_values, time, decline_type) / unknown_values[3]
+    return debit_empiric(unknown_values, time, decline_type) / \
+        unknown_values[3]
 
 
 def debit_dimensionless_fall_bindings(unknown_values, time, parameters,
@@ -72,8 +79,9 @@ def debit_dimensionless_fall_bindings(unknown_values, time, parameters,
     """ qDd matching. """
     return debit_dimensionless(unknown_values, time, parameters,
                                decline_type) * \
-        (np.log(unknown_values[2] / (parameters[0] *
-                                     np.exp(-unknown_values[0]))) - 1. / 2.)
+        (np.log(unknown_values[2] / (effective_well_radius(unknown_values,
+                                                           parameters))) -
+         1. / 2.)
 
 
 def mae_error(unknown_values, time, debit, cumulative_production,
@@ -140,9 +148,9 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
         problem = platypus.Problem(5, 4)
         problem.types[:] = [platypus.Real(-10, 10),
                             platypus.Real(0.00001, 150),
-                            platypus.Real(1, 2000),
+                            platypus.Real(1, 1500),
                             platypus.Real(1, np.max(debit)),
-                            platypus.Real(1e-6, 1e-2)]
+                            platypus.Real(1e-5, 1e-2)]
         problem.function = \
             lambda unknown_values: mae_error(unknown_values, time, debit,
                                              cumulative_production, parameters,
@@ -152,12 +160,10 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
         algorithm.run(100000)
 
         for solution in algorithm.result:
-            if np.sum(solution.objectives[0:2]) < minimal_error:
-                minimal_error = np.sum(solution.objectives[0:2])
+            if np.sum(solution.objectives) < minimal_error:
+                minimal_error = np.sum(solution.objectives)
                 results = solution.variables
 
         print(decline_type / 10, minimal_error, results)
-
-    print(minimal_error, results)
 
     return results
