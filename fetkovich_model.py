@@ -149,7 +149,7 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
         problem.types[:] = [platypus.Real(-10, 10),
                             platypus.Real(0.00001, 150),
                             platypus.Real(1, 1500),
-                            platypus.Real(np.min(debit), np.max(debit)),
+                            platypus.Real(np.min(debit), np.max(debit) * 3),
                             platypus.Real(1e-8, 1e-4)]
         problem.function = \
             lambda unknown_values: mae_error(unknown_values, time, debit,
@@ -163,7 +163,5 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
             if np.sum(solution.objectives) < minimal_error:
                 minimal_error = np.sum(solution.objectives)
                 results = solution.variables
-
-        print(decline_type / 10, minimal_error, results)
 
     return results
