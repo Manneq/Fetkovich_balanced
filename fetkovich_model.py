@@ -14,9 +14,9 @@ def debit_empiric(unknown_values, time, decline_type):
         return unknown_values[3] * np.exp(-unknown_values[4] * time)
 
     return unknown_values[3] / \
-        np.sign(1. + decline_type * unknown_values[4] * time) * \
-        np.abs(1. + decline_type * unknown_values[4] * time) ** \
-        (1. / decline_type)
+        (np.sign(1. + decline_type * unknown_values[4] * time) *
+         np.abs(1. + decline_type * unknown_values[4] * time) **
+         (1. / decline_type))
 
 
 def cumulative_production_empiric(unknown_values, time, decline_type):
@@ -119,7 +119,7 @@ def mae_error(unknown_values, time, debit, cumulative_production,
 def fetkovich_model(time, debit, cumulative_production, parameters):
     """
     bounds = np.array([(-10, 10), (0.00001, 150), (1, 2000),
-                       (1, np.max(debit)), (1e-6, 1e-2)])
+                       (np.min(debit), np.max(debit)), (1e-6, 1e-2)])
 
     decline_type = 0
     best_results_x, best_results_fun = None, 100000
@@ -149,15 +149,15 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
         problem.types[:] = [platypus.Real(-10, 10),
                             platypus.Real(0.00001, 150),
                             platypus.Real(1, 1500),
-                            platypus.Real(1, np.max(debit)),
-                            platypus.Real(1e-5, 1e-2)]
+                            platypus.Real(np.min(debit), np.max(debit)),
+                            platypus.Real(1e-8, 1e-4)]
         problem.function = \
             lambda unknown_values: mae_error(unknown_values, time, debit,
                                              cumulative_production, parameters,
                                              decline_type / 10)
 
         algorithm = platypus.NSGAII(problem)
-        algorithm.run(100000)
+        algorithm.run(250000)
 
         for solution in algorithm.result:
             if np.sum(solution.objectives) < minimal_error:

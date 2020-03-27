@@ -9,9 +9,9 @@ def debit_empiric(unknown_values, time):
         return unknown_values[0] * np.exp(-unknown_values[2] * time)
 
     return unknown_values[0] / \
-        np.sign(1. + unknown_values[1] * unknown_values[2] * time) * \
-        np.abs(1. + unknown_values[1] * unknown_values[2] * time) ** \
-        (1. / unknown_values[1])
+        (np.sign(1. + unknown_values[1] * unknown_values[2] * time) *
+         np.abs(1. + unknown_values[1] * unknown_values[2] * time) **
+         (1. / unknown_values[1]))
 
 
 def mae_error(unknown_values, time, debit):
