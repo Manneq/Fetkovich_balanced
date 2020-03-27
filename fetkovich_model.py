@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.optimize
+import platypus
 
 
 def debit_empiric(unknown_values, time, decline_type):
@@ -36,7 +37,7 @@ def cumulative_production_empiric(unknown_values, time, decline_type):
 def time_dimensionless(unknown_values, time, parameters):
     """ tD """
     return 634 / 100000 * unknown_values[1] * time / \
-        (parameters[4] * parameters[3] * parameters[2] * parameters[0])
+        (parameters[4] * parameters[3] * parameters[2] * parameters[0] ** 2)
 
 
 def time_dimensionless_fall(unknown_values, time):
@@ -98,17 +99,23 @@ def mae_error(unknown_values, time, debit, cumulative_production,
                       cumulative_production_empiric(unknown_values,
                                                     time, decline_type))) / \
         cumulative_production.shape[0]
-
+    """
     return mae_error_time_matching + mae_error_debit_matching + \
         mae_error_debit + mae_error_cumulative_production
+        """
+
+    return [mae_error_time_matching, mae_error_debit_matching, mae_error_debit,
+            mae_error_cumulative_production]
 
 
 def fetkovich_model(time, debit, cumulative_production, parameters):
+    """
     bounds = np.array([(-10, 10), (0.00001, 150), (1, 2000),
                        (1, np.max(debit)), (1e-6, 1e-2)])
 
     decline_type = 0
     best_results_x, best_results_fun = None, 100000
+
 
     for i in range(11):
         results = \
@@ -124,5 +131,33 @@ def fetkovich_model(time, debit, cumulative_production, parameters):
         if results.fun < best_results_fun:
             best_results_fun = results.fun
             best_results_x = results.x
+        """
 
-    return best_results_x
+    minimal_error = 100000
+    results = None
+
+    for decline_type in range(11):
+        problem = platypus.Problem(5, 4)
+        problem.types[:] = [platypus.Real(-10, 10),
+                            platypus.Real(0.00001, 150),
+                            platypus.Real(1, 2000),
+                            platypus.Real(1, np.max(debit)),
+                            platypus.Real(1e-6, 1e-2)]
+        problem.function = \
+            lambda unknown_values: mae_error(unknown_values, time, debit,
+                                             cumulative_production, parameters,
+                                             decline_type / 10)
+
+        algorithm = platypus.NSGAII(problem)
+        algorithm.run(100000)
+
+        for solution in algorithm.result:
+            if np.sum(solution.objectives[0:2]) < minimal_error:
+                minimal_error = np.sum(solution.objectives[0:2])
+                results = solution.variables
+
+        print(decline_type / 10, minimal_error, results)
+
+    print(minimal_error, results)
+
+    return results
