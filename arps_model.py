@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.optimize
-import matplotlib.pyplot as plt
 
 
 def debit_empiric(unknown_values, time):
@@ -8,33 +7,56 @@ def debit_empiric(unknown_values, time):
     if unknown_values[1] == 0:
         return unknown_values[0] * np.exp(-unknown_values[2] * time)
 
+    divisor = 1 + unknown_values[1] * unknown_values[2] * time
+
     return unknown_values[0] / \
-        (np.sign(1. + unknown_values[1] * unknown_values[2] * time) *
-         np.abs(1. + unknown_values[1] * unknown_values[2] * time) **
-         (1. / unknown_values[1]))
+        (np.sign(divisor) * np.abs(divisor) ** (1 / unknown_values[1]))
 
 
-def mae_error(unknown_values, time, debit):
+def cumulative_production_empiric(unknown_values, time):
+    """ Q(t) """
+    if unknown_values[1] == 0:
+        return (unknown_values[0] - debit_empiric(unknown_values, time)) / \
+               unknown_values[2]
+
+    if unknown_values[1] == 1:
+        return unknown_values[0] * np.log(
+            unknown_values[0] / debit_empiric(unknown_values, time)) / \
+            unknown_values[2]
+
+    divisor = debit_empiric(unknown_values, time)
+
+    return unknown_values[0] ** unknown_values[1] * \
+        (unknown_values[0] ** (1 - unknown_values[1]) - np.sign(divisor) *
+         np.abs(divisor) ** (1 - unknown_values[1])) / \
+        (unknown_values[2] * (1 - unknown_values[1]))
+
+
+def mae_error(unknown_values, time, debit, cumulative_production):
     """ MAE error. """
-    return np.sum(np.abs(debit - debit_empiric(unknown_values, time))) / \
+    mae_error_debit = \
+        np.sum(np.abs(debit -
+                      debit_empiric(unknown_values, time))) / \
         time.shape[0]
 
+    mae_error_cumulative_production = \
+        np.sum(np.abs(cumulative_production -
+                      cumulative_production_empiric(unknown_values, time))) / \
+        time.shape[0]
 
-def arps_model(time, debit):
-    bounds = ((1, np.max(debit)), (0, 1), (-1, 1))
+    return mae_error_debit + mae_error_cumulative_production
 
-    results = scipy.optimize.differential_evolution(mae_error, bounds,
-                                                    args=(time, debit),
-                                                    updating='deferred',
-                                                    workers=-1)
 
-    print(results)
+def arps_model(time, debit, cumulative_production):
+    bounds = ((np.min(debit), np.max(debit) * 3), (0, 1), (1e-8, 1e-2))
 
-    plt.plot(time, debit)
-    plt.plot(time, debit_empiric(results.x, time))
-    plt.title("Arps model")
-    plt.show()
-    plt.close()
+    results = \
+        scipy.optimize.shgo(mae_error, bounds,
+                            args=(time, debit, cumulative_production),
+                            n=time.shape[0], iters=10,
+                            minimizer_kwargs={"method": "L-BFGS-B",
+                                              "bounds": bounds},
+                            sampling_method='sobol')
 
     return results.x
 

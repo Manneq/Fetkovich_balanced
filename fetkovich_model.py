@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.optimize
-import platypus
+import arps_model
 
 
 def effective_well_radius(unknown_values, parameters):
@@ -8,160 +8,111 @@ def effective_well_radius(unknown_values, parameters):
     return parameters[0] * np.exp(-unknown_values[0])
 
 
-def debit_empiric(unknown_values, time, decline_type):
-    """ q(t) """
-    if decline_type == 0:
-        return unknown_values[3] * np.exp(-unknown_values[4] * time)
-
-    return unknown_values[3] / \
-        (np.sign(1. + decline_type * unknown_values[4] * time) *
-         np.abs(1. + decline_type * unknown_values[4] * time) **
-         (1. / decline_type))
-
-
-def cumulative_production_empiric(unknown_values, time, decline_type):
-    """ Q(t) """
-    if decline_type == 0:
-        return (unknown_values[3] - debit_empiric(unknown_values,
-                                                  time, decline_type)) / \
-               unknown_values[4]
-
-    if decline_type == 1:
-        return unknown_values[3] * np.log(
-            unknown_values[3] / debit_empiric(unknown_values, time,
-                                              decline_type)) / \
-            unknown_values[4]
-
-    return unknown_values[3] ** decline_type * \
-        (unknown_values[3] ** (1 - decline_type) -
-         np.sign(debit_empiric(unknown_values, time, decline_type)) *
-         np.abs(debit_empiric(unknown_values, time, decline_type)) **
-         (1 - decline_type)) / (unknown_values[4] * (1 - decline_type))
+def time_balanced(time, parameters):
+    """ tcr """
+    return np.divide(arps_model.cumulative_production_empiric(parameters[8:],
+                                                              time),
+                     arps_model.debit_empiric(parameters[8:], time))
 
 
 def time_dimensionless(unknown_values, time, parameters):
     """ tD """
-    return 634 / 100000 * unknown_values[1] * time / \
+    return 634 / 100000 * unknown_values[1] * \
+        time_balanced(time, parameters) / \
         (parameters[4] * parameters[3] * parameters[2] * parameters[0] ** 2)
 
 
-def time_dimensionless_fall(unknown_values, time):
+def time_dimensionless_fall(time, parameters):
     """ tDd """
-    return unknown_values[4] * time
+    return parameters[9] * time_balanced(time, parameters)
 
 
 def time_dimensionless_fall_bindings(unknown_values, time, parameters):
     """ tDd matching """
-    return 4. * time_dimensionless(unknown_values, time, parameters) / \
+    return 4 * time_dimensionless(unknown_values, time, parameters) / \
         (((unknown_values[2] / effective_well_radius(unknown_values,
-                                                     parameters)) ** 2 - 1.) *
-         (2. * np.log(unknown_values[2] /
-                      (effective_well_radius(unknown_values, parameters))) -
-          1.))
+                                                     parameters)) ** 2 - 1) *
+         (2 * np.log(unknown_values[2] /
+                     effective_well_radius(unknown_values, parameters)) - 1))
 
 
-def debit_dimensionless(unknown_values, time, parameters, decline_type):
+def debit_dimensionless(unknown_values, time, parameters):
     """ qD """
-    return 1412 / 10 * debit_empiric(unknown_values, time, decline_type) * \
-        parameters[3] * parameters[1] / (unknown_values[1] *
-                                         parameters[5] * (parameters[7] -
-                                                          parameters[6]))
+    return 1412 / 10 * arps_model.debit_empiric(parameters[8:], time) * \
+        parameters[3] * parameters[1] / (unknown_values[1] * parameters[5] *
+                                         (parameters[7] - parameters[6]))
 
 
-def debit_dimensionless_fall(unknown_values, time, decline_type):
+def debit_dimensionless_fall(time, parameters):
     """ qDd """
-    return debit_empiric(unknown_values, time, decline_type) / \
-        unknown_values[3]
+    return arps_model.debit_empiric(parameters[8:], time) / parameters[8]
 
 
-def debit_dimensionless_fall_bindings(unknown_values, time, parameters,
-                                      decline_type):
+def debit_dimensionless_fall_bindings(unknown_values, time, parameters):
     """ qDd matching. """
-    return debit_dimensionless(unknown_values, time, parameters,
-                               decline_type) * \
-        (np.log(unknown_values[2] / (effective_well_radius(unknown_values,
-                                                           parameters))) -
-         1. / 2.)
+    return 2 * debit_dimensionless(unknown_values, time, parameters) * \
+        (2 * np.log(unknown_values[2] /
+                    effective_well_radius(unknown_values, parameters)) - 1)
 
 
-def mae_error(unknown_values, time, debit, cumulative_production,
-              parameters, decline_type):
-    """ MAE error. """
-    mae_error_time_matching = np.sum(
-        np.abs(time_dimensionless_fall_bindings(unknown_values,
-                                                time, parameters) -
-               time_dimensionless_fall(unknown_values, time))) / time.shape[0]
+def cumulative_production_dimensionless(unknown_values, time, parameters):
+    """ QD """
+    return 1 / (2 * np.pi) - \
+        debit_dimensionless(unknown_values, time, parameters)
 
-    mae_error_debit_matching = np.sum(
-        np.abs(debit_dimensionless_fall_bindings(unknown_values, time,
-                                                 parameters, decline_type) -
-               debit_dimensionless_fall(unknown_values, time,
-                                        decline_type))) / time.shape[0]
+
+def cumulative_production_dimensionless_fall(time, parameters):
+    """ QDd """
+    return arps_model.cumulative_production_empiric(parameters[8:], time) / \
+        arps_model.cumulative_production_empiric(parameters[8:], time)[0]
+
+
+def cumulative_production_dimensionless_fall_bindings(unknown_values,
+                                                      time, parameters):
+    """ QDd matching. """
+    return 2 * cumulative_production_dimensionless(unknown_values,
+                                                   time, parameters) / \
+        ((unknown_values[2] / effective_well_radius(unknown_values,
+                                                    parameters)) ** 2 - 1)
+
+
+def mae_error(unknown_values, time, parameters):
+    """ Error function. """
+    mae_error_time = np.sum(np.abs(
+        time_dimensionless_fall_bindings(unknown_values, time, parameters) -
+        time_dimensionless_fall(time, parameters))
+                            [time.shape[0] * 4 // 5:]) / \
+        (time.shape[0] // 5)
 
     mae_error_debit = np.sum(np.abs(
-        debit - debit_empiric(unknown_values, time, decline_type))) / \
-        debit.shape[0]
+        debit_dimensionless_fall_bindings(unknown_values, time, parameters) -
+        debit_dimensionless_fall(time, parameters))
+                             [time.shape[0] * 4 // 5:]) / \
+        (time.shape[0] // 5)
 
     mae_error_cumulative_production = \
-        np.sum(np.abs(cumulative_production -
-                      cumulative_production_empiric(unknown_values,
-                                                    time, decline_type))) / \
-        cumulative_production.shape[0]
-    """
-    return mae_error_time_matching + mae_error_debit_matching + \
-        mae_error_debit + mae_error_cumulative_production
-        """
+        np.sum(np.abs(cumulative_production_dimensionless_fall_bindings(
+            unknown_values, time, parameters) -
+                      cumulative_production_dimensionless_fall
+                      (time, parameters))[time.shape[0] * 4 // 5:]) / \
+        (time.shape[0] // 5)
 
-    return [mae_error_time_matching, mae_error_debit_matching, mae_error_debit,
-            mae_error_cumulative_production]
+    return mae_error_time + mae_error_debit + mae_error_cumulative_production
 
 
 def fetkovich_model(time, debit, cumulative_production, parameters):
-    """
-    bounds = np.array([(-10, 10), (0.00001, 150), (1, 2000),
-                       (np.min(debit), np.max(debit)), (1e-6, 1e-2)])
+    bounds = np.array([(-10, 10), (0.1, 150), (1, 2000)])
 
-    decline_type = 0
-    best_results_x, best_results_fun = None, 100000
+    parameters = \
+        np.append(parameters, arps_model.arps_model(time, debit,
+                                                    cumulative_production))
 
+    results = \
+        scipy.optimize.shgo(mae_error, bounds,
+                            args=(time, parameters),
+                            n=time.shape[0] * 6, iters=25,
+                            minimizer_kwargs={"method": "L-BFGS-B",
+                                              "bounds": bounds},
+                            sampling_method='sobol')
 
-    for i in range(11):
-        results = \
-            scipy.optimize.differential_evolution(mae_error, bounds,
-                                                  args=(time, debit,
-                                                        cumulative_production,
-                                                        parameters,
-                                                        decline_type / 10),
-                                                  updating='deferred',
-                                                  maxiter=1000000,
-                                                  workers=-1)
-
-        if results.fun < best_results_fun:
-            best_results_fun = results.fun
-            best_results_x = results.x
-        """
-
-    minimal_error = 100000
-    results = None
-
-    for decline_type in range(11):
-        problem = platypus.Problem(5, 4)
-        problem.types[:] = [platypus.Real(-10, 10),
-                            platypus.Real(0.00001, 150),
-                            platypus.Real(1, 1500),
-                            platypus.Real(np.min(debit), np.max(debit) * 3),
-                            platypus.Real(1e-8, 1e-4)]
-        problem.function = \
-            lambda unknown_values: mae_error(unknown_values, time, debit,
-                                             cumulative_production, parameters,
-                                             decline_type / 10)
-
-        algorithm = platypus.NSGAII(problem)
-        algorithm.run(250000)
-
-        for solution in algorithm.result:
-            if np.sum(solution.objectives) < minimal_error:
-                minimal_error = np.sum(solution.objectives)
-                results = solution.variables
-
-    return results
+    return results.x

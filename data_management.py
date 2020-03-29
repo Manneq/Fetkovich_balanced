@@ -35,21 +35,17 @@ def data_preprocessing():
     debit = debit.astype(float)
     cumulative_production = cumulative_production.astype(float)
 
-    """
-    time = time[cumulative_production.shape[0] // 5:]
+    time = time[cumulative_production.shape[0] // 5:] / 24
     debit = debit[cumulative_production.shape[0] // 5:]
     cumulative_production = \
         cumulative_production[cumulative_production.shape[0] // 5:]
-        """
 
     return time, debit, cumulative_production, parameters
 
 
 def data_output(results):
     data = pd.DataFrame([results], columns=['Skin', 'Porosity',
-                                            'Collector radius',
-                                            'Initial debit',
-                                            'Fall rate'])
+                                            'Collector radius'])
     data = data.set_index('Skin')
 
     data.to_csv(path_or_buf="data/output/results.csv", sep=";")
