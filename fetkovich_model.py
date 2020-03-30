@@ -112,7 +112,7 @@ def fetkovich_model(debit, cumulative_production, parameters):
     results = \
         scipy.optimize.shgo(mae_error, bounds,
                             args=(debit, cumulative_production, parameters),
-                            n=debit.shape[0] * 3, iters=3,
+                            n=debit.shape[0] * 3, iters=10,
                             minimizer_kwargs={"method": "L-BFGS-B",
                                               "bounds": bounds},
                             sampling_method='sobol')

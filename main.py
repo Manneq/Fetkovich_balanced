@@ -6,7 +6,7 @@ def main():
     time, debit, cumulative_production, parameters = \
         data_management.data_preprocessing()
 
-    results = fetkovich_model.fetkovich_model(time, debit,
+    results = fetkovich_model.fetkovich_model(debit,
                                               cumulative_production,
                                               parameters)
 
