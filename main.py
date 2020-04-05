@@ -1,16 +1,18 @@
 import data_management
 import fetkovich_model
+import data_plotting
 
 
 def main():
-    time, debit, cumulative_production, parameters = \
+    time, pressure, debit, cumulative_production, parameters = \
         data_management.data_preprocessing()
 
-    results = fetkovich_model.fetkovich_model(debit,
-                                              cumulative_production,
-                                              parameters)
+    data_plotting.data_plotting(time, pressure, debit, "Initial data")
 
-    data_management.data_output(results[:3])
+    """
+    results = fetkovich_model.fetkovich_model(pressure, debit, parameters)
+
+    data_management.data_output(results[:3])"""
 
     return
 
