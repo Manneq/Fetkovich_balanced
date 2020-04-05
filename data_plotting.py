@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 
 
 def data_plotting(time, pressure, debit, title,
-                  time_model=None, pressure_model=None, debit_model=None,
+                  debit_model=None, time_forecast=None, pressure_forecast=None,
+                  debit_forecast=None,
                   width=1920, height=1080, dpi=96, font_size=22):
     plt.rcParams.update({'font.size': font_size})
     figure, axes = plt.subplots(nrows=2,
@@ -10,13 +11,26 @@ def data_plotting(time, pressure, debit, title,
     figure.subplots_adjust(hspace=0.35)
     figure.suptitle(title)
 
-    axes[0].plot(time, debit, 'y', label="Initial debit")
+    axes[0].plot(time, debit, 'y', label="Well debit")
+
+    if debit_model:
+        axes[0].plot(time, debit_model, 'r', label="Model debit")
+
+    if time_forecast and pressure_forecast and debit_forecast:
+        axes[0].plot(time_forecast, debit_forecast, 'r--',
+                     label="Forecast debit")
+
     axes[0].set_title("Debit (m3/D) vs Time (hours)")
     axes[0].set_xlabel("Time (hours)")
     axes[0].set_ylabel("Debit (m3/D)")
     axes[0].legend()
 
-    axes[1].plot(time, pressure, 'g', label="Initial pressure")
+    axes[1].plot(time, pressure, 'g', label="Well pressure")
+
+    if time_forecast and pressure_forecast and debit_forecast:
+        axes[0].plot(time_forecast, pressure_forecast, 'g--',
+                     label="Forecast pressure")
+
     axes[1].set_title("Pressure (atm) vs Time (hours)")
     axes[1].set_xlabel("Time (hours)")
     axes[1].set_ylabel("Pressure (atm)")
