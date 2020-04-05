@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 
 def data_plotting(time, pressure, debit, title,
                   debit_model=None, time_forecast=None, pressure_forecast=None,
-                  debit_forecast=None,
-                  width=1920, height=1080, dpi=96, font_size=22):
+                  debit_forecast=None, width=1920, height=1080, dpi=96,
+                  font_size=22):
+    """ Method for plotting data. """
     plt.rcParams.update({'font.size': font_size})
     figure, axes = plt.subplots(nrows=2,
                                 figsize=(width / dpi, height / dpi), dpi=dpi)
