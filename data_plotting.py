@@ -13,7 +13,7 @@ def data_plotting(time, pressure, debit, title,
     figure.subplots_adjust(hspace=0.35)
     figure.suptitle(title)
 
-    axes[0].plot(time, debit, 'y', label="Well debit")
+    axes[0].plot(time, debit, 'y', label="Debit")
 
     if type(debit_model) is np.ndarray:
         axes[0].plot(time, debit_model, 'r', label="Model debit")
@@ -29,7 +29,7 @@ def data_plotting(time, pressure, debit, title,
     axes[0].set_ylabel("Debit (m3/D)")
     axes[0].legend()
 
-    axes[1].plot(time, pressure, 'g', label="Well pressure")
+    axes[1].plot(time, pressure, 'g', label="Pressure")
 
     if type(time_forecast) is np.ndarray \
             and type(pressure_forecast) is np.ndarray \
