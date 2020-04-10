@@ -38,8 +38,8 @@ def time_dimensionless_fall_bindings(unknown_values, debit,
 
 def debit_dimensionless(unknown_values, pressure, debit, parameters):
     """ qD """
-    return np.divide(debit * parameters[3] * parameters[1],
-                     2 * np.pi * unknown_values[1] * parameters[5] *
+    return np.divide(1412 / 10 * debit * parameters[3] * parameters[1],
+                     unknown_values[1] * parameters[5] *
                      (parameters[6] - pressure))
 
 
@@ -109,12 +109,12 @@ def mae_error(unknown_values, pressure, debit, parameters):
 
 def fetkovich_model(pressure, debit, parameters):
     bounds = np.array([(-10, 10), (0.001, 150), (1, 2000),
-                       (np.min(debit), np.max(debit))])
+                       (np.min(debit), np.max(debit) * 3)])
 
     results = \
         scipy.optimize.shgo(mae_error, bounds,
                             args=(pressure, debit, parameters),
-                            n=debit.shape[0] * 25, iters=10,
+                            n=100000, iters=25,
                             minimizer_kwargs={"method": "L-BFGS-B",
                                               "bounds": bounds},
                             sampling_method='sobol')

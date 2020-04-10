@@ -9,10 +9,9 @@ def main():
 
     data_plotting.data_plotting(time, pressure, debit, "Initial data")
 
-    """
     results = fetkovich_model.fetkovich_model(pressure, debit, parameters)
 
-    data_management.data_output(results[:3])"""
+    data_management.data_output(results[:3])
 
     return
 

@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -14,10 +15,12 @@ def data_plotting(time, pressure, debit, title,
 
     axes[0].plot(time, debit, 'y', label="Well debit")
 
-    if debit_model:
+    if type(debit_model) is np.ndarray:
         axes[0].plot(time, debit_model, 'r', label="Model debit")
 
-    if time_forecast and pressure_forecast and debit_forecast:
+    if type(time_forecast) is np.ndarray \
+            and type(pressure_forecast) is np.ndarray \
+            and type(debit_forecast) is np.ndarray:
         axes[0].plot(time_forecast, debit_forecast, 'r--',
                      label="Forecast debit")
 
@@ -28,7 +31,9 @@ def data_plotting(time, pressure, debit, title,
 
     axes[1].plot(time, pressure, 'g', label="Well pressure")
 
-    if time_forecast and pressure_forecast and debit_forecast:
+    if type(time_forecast) is np.ndarray \
+            and type(pressure_forecast) is np.ndarray \
+            and type(debit_forecast) is np.ndarray:
         axes[0].plot(time_forecast, pressure_forecast, 'g--',
                      label="Forecast pressure")
 

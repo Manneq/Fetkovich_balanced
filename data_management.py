@@ -47,8 +47,6 @@ def data_preprocessing():
     cumulative_production = cumulative_production.astype(float)
     pressure = pressure.astype(float)
 
-    time = time / 24
-
     return time, pressure, debit, cumulative_production, parameters
 
 
